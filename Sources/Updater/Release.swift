@@ -1,7 +1,7 @@
 import Foundation
 
 /// Wydanie z GitHuba – tylko to, czego potrzebuje aktualizacja.
-public struct Release: Sendable, Equatable {
+public struct Release: Sendable, Equatable, Codable {
     public let version: AppVersion
     public let title: String
     public let notes: String

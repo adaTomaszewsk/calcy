@@ -114,3 +114,18 @@ struct CheckScheduleTests {
         #expect(schedule.failureCount == 0)
     }
 }
+
+@Suite("Zapamiętane wydanie")
+struct ReleaseCodingTests {
+    @Test func roundTrip() throws {
+        let release = Release(
+            version: AppVersion("0.1.7")!,
+            title: "Calcy 0.1.7",
+            notes: "Poprawki",
+            pageURL: URL(string: "https://example.com/tag")!,
+            downloadURL: URL(string: "https://example.com/Calcy.dmg")!
+        )
+        let data = try JSONEncoder().encode(release)
+        #expect(try JSONDecoder().decode(Release.self, from: data) == release)
+    }
+}

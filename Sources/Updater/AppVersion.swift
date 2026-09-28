@@ -1,7 +1,7 @@
 import Foundation
 
 /// Wersja w formacie `0.1.7` (z opcjonalnym `v` z przodu).
-public struct AppVersion: Sendable, Equatable, Comparable, CustomStringConvertible {
+public struct AppVersion: Sendable, Equatable, Comparable, CustomStringConvertible, Codable {
     public let components: [Int]
 
     public init?(_ text: String) {

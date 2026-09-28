@@ -39,6 +39,7 @@ final class UpdateChecker {
         static let blockedUntil = "updateBlockedUntil"
         static let etag = "updateETag"
         static let dismissed = "updateDismissedVersion"
+        static let lastRelease = "updateLastRelease"
     }
 
     private static let owner = "adaTomaszewsk"
@@ -59,6 +60,21 @@ final class UpdateChecker {
             blockedUntil: defaults.object(forKey: Keys.blockedUntil) as? Date
         )
         lastCheck = schedule.lastCheck
+
+        // Wydanie zapamiętane przy poprzednim sprawdzeniu – dzięki temu informacja
+        // o aktualizacji jest widoczna od razu po starcie.
+        if let release = Self.cachedRelease(), release.version > currentVersion {
+            state = .available(release)
+        }
+    }
+
+    private static func cachedRelease() -> Release? {
+        guard let data = UserDefaults.standard.data(forKey: Keys.lastRelease) else { return nil }
+        return try? JSONDecoder().decode(Release.self, from: data)
+    }
+
+    private static func cache(_ release: Release) {
+        UserDefaults.standard.set(try? JSONEncoder().encode(release), forKey: Keys.lastRelease)
     }
 
     // MARK: - Sprawdzanie
@@ -94,11 +110,16 @@ final class UpdateChecker {
             case 200:
                 UserDefaults.standard.set(http.value(forHTTPHeaderField: "ETag"), forKey: Keys.etag)
                 let release = try GitHubReleases.parseLatest(data)
+                Self.cache(release)
                 state = release.version > currentVersion ? .available(release) : .upToDate
                 finish(.success)
             case 304:
-                // Nic się nie zmieniło od ostatniego sprawdzenia.
-                if case .available = state {} else { state = .upToDate }
+                // Bez zmian na serwerze – bierzemy wydanie zapamiętane wcześniej.
+                if let release = Self.cachedRelease(), release.version > currentVersion {
+                    state = .available(release)
+                } else {
+                    state = .upToDate
+                }
                 finish(.success)
             case 404:
                 // Nie ma jeszcze żadnego wydania.

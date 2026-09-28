@@ -81,6 +81,13 @@ Długość, waga (z `dag`!), objętość (z szklankami i łyżkami), powierzchni
 - Ustawienia, motyw, rozmiar okna i ostatnio otwarta karta są zapamiętywane.
 - Wszystko zapisuje się samo.
 
+## Aktualizacje
+
+Każdy commit na `main` uruchamia [GitHub Action](.github/workflows/release.yml), który buduje aplikację,
+składa instalator i publikuje wydanie. Calcy sprawdza wydania raz na 6 godzin (można wyłączyć w ustawieniach)
+i pokazuje pasek „Dostępna nowa wersja” z przyciskiem **Zaktualizuj** – aplikacja sama pobiera instalator,
+podmienia się i uruchamia ponownie. Ta sama informacja jest w ikonie w pasku menu i w ustawieniach.
+
 ## Pobieranie i instalacja
 
 **Wymagania:** macOS 15 lub nowszy.
