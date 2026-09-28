@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import Updater
 
 /// Górny pasek zamiast systemowego tytułu: nazwa bieżącej karty (kliknięcie – zmiana nazwy), przesuwa okno.
 struct HeaderBar: View {
@@ -150,6 +151,52 @@ struct CompletionBar: View {
         .padding(.horizontal, 14)
         .frame(height: 30)
         .background(Color(nsColor: Palette.currentLine))
+    }
+}
+
+/// Pasek nad stopką: informacja o nowej wersji z przyciskiem aktualizacji.
+struct UpdateBar: View {
+    let checker: UpdateChecker
+    let release: Release
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "arrow.down.circle.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(Color(nsColor: Palette.result))
+            Text("Dostępna nowa wersja \(release.version.description)")
+                .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                .foregroundStyle(Color(nsColor: Palette.text))
+            Spacer(minLength: 8)
+
+            if case .downloading(let progress) = checker.state {
+                ProgressView(value: progress)
+                    .progressViewStyle(.linear)
+                    .frame(width: 90)
+                Text("Pobieram…")
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(Color(nsColor: Palette.chromeText))
+            } else {
+                Button("Później") { checker.dismissCurrentRelease() }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11, design: .rounded))
+                    .foregroundStyle(Color(nsColor: Palette.chromeText))
+                Button {
+                    Task { await checker.install() }
+                } label: {
+                    Text("Zaktualizuj")
+                        .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .frame(height: 22)
+                        .background(Capsule().fill(Color(nsColor: Palette.result)))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14)
+        .frame(height: 34)
+        .background(Color(nsColor: Palette.hoverPill))
     }
 }
 

@@ -1,6 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import ServiceManagement
+import Updater
 
 /// Globalny skrót klawiszowy i zachowanie aplikacji w tle.
 @MainActor
@@ -18,6 +19,7 @@ final class AppController {
     var openSettingsWindow: (() -> Void)?
 
     private var statusItem: NSStatusItem?
+    private var availableRelease: Release?
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
 
@@ -78,6 +80,14 @@ final class AppController {
         NSApp.activate()
     }
 
+    /// Kropka przy ikonie w pasku menu i pozycja „Zaktualizuj”, gdy jest nowa wersja.
+    func updateStatusItem(release: Release?) {
+        availableRelease = release
+        guard statusItem != nil else { return }
+        hideStatusItem()
+        showStatusItem()
+    }
+
     private func showStatusItem() {
         guard statusItem == nil else { return }
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -88,7 +98,21 @@ final class AppController {
             button.toolTip = "Calcy – \(Self.hotKeyDescription) pokazuje okno"
         }
 
+        if availableRelease != nil, let button = item.button {
+            button.title = " ●"
+            button.attributedTitle = NSAttributedString(string: " ●", attributes: [
+                .foregroundColor: NSColor.controlAccentColor,
+                .font: NSFont.systemFont(ofSize: 9),
+            ])
+            button.toolTip = "Calcy – dostępna aktualizacja"
+        }
+
         let menu = NSMenu()
+        if let release = availableRelease {
+            menu.addItem(withTitle: "Zaktualizuj do \(release.version)", action: #selector(installUpdateFromStatusItem), keyEquivalent: "")
+                .target = self
+            menu.addItem(.separator())
+        }
         menu.addItem(withTitle: "Pokaż Calcy  \(Self.hotKeyDescription)", action: #selector(showFromStatusItem), keyEquivalent: "")
             .target = self
         menu.addItem(withTitle: "Ustawienia…", action: #selector(openSettingsFromStatusItem), keyEquivalent: ",")
@@ -103,6 +127,10 @@ final class AppController {
         guard let statusItem else { return }
         NSStatusBar.system.removeStatusItem(statusItem)
         self.statusItem = nil
+    }
+
+    @objc private func installUpdateFromStatusItem() {
+        Task { await UpdateChecker.shared.install() }
     }
 
     @objc private func showFromStatusItem() {

@@ -1,0 +1,43 @@
+name: Build i wydanie
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Potrzebne, żeby akcja mogła utworzyć wydanie.
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ustal wersję
+        id: version
+        run: echo "value=0.1.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Testy
+        run: swift test
+
+      - name: Zbuduj instalator
+        env:
+          CALCY_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          brew install create-dmg
+          ./scripts/make-dmg.sh
+
+      - name: Opublikuj wydanie
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          NOTES=$(git log -1 --pretty=%B)
+          gh release create "v$VERSION" build/Calcy.dmg \
+            --title "Calcy $VERSION" \
+            --notes "$NOTES
+
+          Pobierz Calcy.dmg, otwórz i przeciągnij Calcy do Aplikacji.
+          Przy pierwszym uruchomieniu: prawy przycisk → Otwórz (aplikacja nie ma certyfikatu Apple)."

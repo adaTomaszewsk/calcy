@@ -51,6 +51,7 @@ private struct MainView: View {
     @AppStorage(SettingsKey.fontSize) private var fontSize = SettingsKey.defaultFontSize
     @AppStorage(SettingsKey.alwaysOnTop) private var alwaysOnTop = false
     @AppStorage(SettingsKey.hideDockIcon) private var hideDockIcon = false
+    @State private var updateChecker = UpdateChecker.shared
     @State private var copyGeneration = 0
 
     var body: some View {
@@ -79,6 +80,10 @@ private struct MainView: View {
                 .transition(.push(from: cardStore.direction > 0 ? .trailing : .leading))
             }
             .clipped()
+            if let release = updateChecker.availableRelease {
+                UpdateBar(checker: updateChecker, release: release)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
             if let completions {
                 CompletionBar(candidates: completions.candidates, selected: completions.selected)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -106,6 +111,8 @@ private struct MainView: View {
         .frame(minWidth: 480, minHeight: 300)
         .navigationTitle(cardStore.selected.title)
         .task { await rateStore.keepUpdated() }
+        .task { await updateChecker.runPeriodically() }
+        .animation(.smooth(duration: 0.25), value: updateChecker.availableRelease)
         .onAppear {
             AppController.shared.openMainWindow = { openWindow(id: "main") }
             AppController.shared.openSettingsWindow = { openWindow(id: "settings") }

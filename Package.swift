@@ -7,10 +7,13 @@ let package = Package(
     products: [
         .executable(name: "Calcy", targets: ["Calcy"]),
         .library(name: "CalcEngine", targets: ["CalcEngine"]),
+        .library(name: "Updater", targets: ["Updater"]),
     ],
     targets: [
         .target(name: "CalcEngine"),
-        .executableTarget(name: "Calcy", dependencies: ["CalcEngine"]),
+        .target(name: "Updater"),
+        .executableTarget(name: "Calcy", dependencies: ["CalcEngine", "Updater"]),
         .testTarget(name: "CalcEngineTests", dependencies: ["CalcEngine"]),
+        .testTarget(name: "UpdaterTests", dependencies: ["Updater"]),
     ]
 )
